@@ -1,0 +1,5 @@
+"main.obj",
+"lcd.obj",
+"i2c.obj" 
+TO "lcd1602" 
+RAMSIZE(256) 

@@ -1,0 +1,307 @@
+C51 COMPILER V9.54   MAIN                                                                  04/12/2020 00:30:44 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\Keil\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include "reg52.h"  
+   2          #include "lcd.h"
+   3          #include "string.h"
+   4          #include "i2c.h"
+   5          #define GPIO_KEY P1
+   6          sbit dianji=P2^3;
+   7          typedef unsigned int u16;   //对数据类型进行声明定义
+   8          typedef unsigned char u8;
+   9          u8 KeyValue;
+  10          u8 counter=0;
+  11          u8 answer[32];
+  12          u8 find;
+  13          u8 lanya=0;//蓝牙标志位
+  14          u8 code smgduan[]={'1','2','3','A','4','5','6','B','7','8','9','C','*','0','#','D'};
+  15          
+  16          void delay1(u16 i)
+  17          {
+  18   1        while(i--); 
+  19   1      }
+  20          void init()
+  21          {
+  22   1        TMOD=0x20;
+  23   1        TH1=0xF3;
+  24   1        TL1=0xF3;
+  25   1        TR1=1;
+  26   1        SCON=0x50;
+  27   1        PCON=0x80;
+  28   1        IE=0x90;
+  29   1      }
+  30          
+  31          u8 KeyDown()
+  32          {
+  33   1        char a=0;
+  34   1        GPIO_KEY=0x0f;
+  35   1        if(GPIO_KEY!=0x0f)//读取按键是否按下
+  36   1        {
+  37   2          delay1(1000);//延时10ms进行消抖
+  38   2          if(GPIO_KEY!=0x0f)//再次检测键盘是否按下
+  39   2          { 
+  40   3            //测试列
+  41   3            GPIO_KEY=0X0F;
+  42   3            switch(GPIO_KEY)
+  43   3            {
+  44   4              case(0X07): KeyValue=0;break;
+  45   4              case(0X0b): KeyValue=1;break;
+  46   4              case(0X0d): KeyValue=2;break;
+  47   4              case(0X0e): KeyValue=3;break;
+  48   4            }
+  49   3            //测试行
+  50   3            GPIO_KEY=0XF0;
+  51   3            switch(GPIO_KEY)
+  52   3            {
+  53   4              case(0X70): KeyValue=KeyValue;break;
+  54   4              case(0Xb0): KeyValue=KeyValue+4;break;
+  55   4              case(0Xd0): KeyValue=KeyValue+8;break;
+C51 COMPILER V9.54   MAIN                                                                  04/12/2020 00:30:44 PAGE 2   
+
+  56   4              case(0Xe0): KeyValue=KeyValue+12;break;
+  57   4            }
+  58   3            while((a<50)&&(GPIO_KEY!=0xf0))  //检测按键松手检测
+  59   3            {
+  60   4              delay1(1000);
+  61   4              a++;
+  62   4            }
+  63   3            return  smgduan[KeyValue];
+  64   3          }
+  65   2        }
+  66   1        return '%';
+  67   1      }
+  68          void zhengwu(u8 panduan)
+  69          {
+  70   1        LcdInit();
+  71   1         if(panduan)
+  72   1        {
+  73   2          dianji=0;
+  74   2          LcdWriteData('O');
+  75   2          LcdWriteData('K');
+  76   2        }
+  77   1        else
+  78   1        {
+  79   2          LcdWriteData('E');
+  80   2          LcdWriteData('R');
+  81   2          LcdWriteData('R');
+  82   2          LcdWriteData('0');
+  83   2          LcdWriteData('R');
+  84   2        }
+  85   1        delay1(100000);delay1(100000);delay1(100000);
+  86   1        delay1(100000);delay1(100000);delay1(100000);
+  87   1        dianji=1;
+  88   1        LcdInit();
+  89   1      }
+  90          void mimachushizhishezhi()//密码初始值设置
+  91          {
+  92   1        write(1,'0');
+  93   1        delay1(100);
+  94   1        write(2,'1');
+  95   1        delay1(100);
+  96   1        write(3,'2');
+  97   1        delay1(100);
+  98   1        write(4,'3');
+  99   1        delay1(100);
+ 100   1        write(5,'4');
+ 101   1        delay1(100);
+ 102   1        write(6,'5');
+ 103   1        delay1(100);
+ 104   1      }
+ 105          
+ 106          void main()
+ 107          {
+ 108   1        u8 reanswer[32];
+ 109   1        u8 code1[6];
+ 110   1        u8 code2[32];
+ 111   1        u8 counter=0;
+ 112   1        u8 panduan=1;
+ 113   1        u8 review=0;//密码重置标志位
+ 114   1        u8 repoint=0;//密码重置校验位
+ 115   1        u8 result=1;//密码重置结果位
+ 116   1        u8 i;
+ 117   1        LcdInit();
+C51 COMPILER V9.54   MAIN                                                                  04/12/2020 00:30:44 PAGE 3   
+
+ 118   1        init();
+ 119   1        //mimachushizhishezhi();//密码初始值设置
+ 120   1        for(i=0;i<=5;i++)//密码读取
+ 121   1        {
+ 122   2           code1[i]=read(i+1);
+ 123   2           delay1(100);
+ 124   2        }
+ 125   1        while(1)
+ 126   1        {
+ 127   2        while(1)
+ 128   2        { 
+ 129   3          if(lanya==0)
+ 130   3            find=KeyDown();
+ 131   3          else
+ 132   3            LcdWriteData(find);
+ 133   3          delay1(100);  
+ 134   3          if(find!='%')
+ 135   3          {
+ 136   4            lanya=0;
+ 137   4            if(find=='A')
+ 138   4            {
+ 139   5              LcdWriteCom(0x04);
+ 140   5              LcdWriteData(' ');
+ 141   5              LcdWriteCom(0x06);
+ 142   5              LcdWriteData(' ');
+ 143   5              LcdWriteCom(0x04);
+ 144   5              LcdWriteData(' ');
+ 145   5              LcdWriteCom(0x06);
+ 146   5              counter--;
+ 147   5              if(strlen(answer)>6)//去除长度超过6后的影响
+ 148   5              {
+ 149   6                for(i=0;i<=strlen(answer)-1;i++)
+ 150   6                  reanswer[i]=answer[i];
+ 151   6                memset(answer, 0 , sizeof(answer));
+ 152   6                for(i=0;i<=counter-1;i++)
+ 153   6                    answer[i]=reanswer[i];
+ 154   6              }
+ 155   5            }
+ 156   4            else if(find=='B')
+ 157   4            {
+ 158   5              LcdInit();
+ 159   5              memset(answer, 0 , sizeof(answer));//清空answer
+ 160   5              counter=0;
+ 161   5            }
+ 162   4            else if(find=='C')//密码重置
+ 163   4            {
+ 164   5              if(answer[0]=='*'&&answer[1]=='#'&&answer[2]=='7'&&answer[3]=='9'&&answer[4]=='#'&&answer[5]=='*')
+ 165   5              {
+ 166   6              if(review==0)
+ 167   6              {
+ 168   7                LcdInit();
+ 169   7                counter=0;
+ 170   7                memset(answer, 0 , sizeof(answer));//清空answer
+ 171   7                answer[0]='\0';
+ 172   7              }
+ 173   6              review=1;
+ 174   6              }
+ 175   5              else
+ 176   5              {
+ 177   6                LcdInit();
+ 178   6                counter=0;
+ 179   6                memset(answer, 0 , sizeof(answer));//清空answer
+C51 COMPILER V9.54   MAIN                                                                  04/12/2020 00:30:44 PAGE 4   
+
+ 180   6                answer[0]='\0';
+ 181   6                LcdInit();
+ 182   6                LcdWriteData('N');
+ 183   6                LcdWriteData('O');
+ 184   6                LcdWriteData('T');
+ 185   6                delay1(100000);delay1(100000);delay1(100000);
+ 186   6                delay1(100000);delay1(100000);delay1(100000);
+ 187   6                LcdInit();
+ 188   6              }
+ 189   5            }
+ 190   4            else if(find=='D')
+ 191   4              break;  
+ 192   4            else
+ 193   4              {
+ 194   5              answer[counter]=find;
+ 195   5              LcdWriteData(answer[counter]);
+ 196   5              counter++;
+ 197   5            }
+ 198   4          }     
+ 199   3        }//输入结束
+ 200   2        if(review==0)
+ 201   2        {
+ 202   3          if(strlen(answer)!=6)//本来6位密码但是要加一个‘D’确认键，共七位
+ 203   3            panduan=0;
+ 204   3          for(i=0;i<=5;i++)
+ 205   3          {
+ 206   4            if(answer[i]!=code1[i])
+ 207   4              panduan=0;
+ 208   4          }
+ 209   3          zhengwu(panduan);
+ 210   3          panduan=1;
+ 211   3      
+ 212   3        }
+ 213   2        else//密码重置
+ 214   2        {
+ 215   3          if(repoint==0)
+ 216   3          {
+ 217   4            for(i=0;i<=strlen(answer)-1;i++)
+ 218   4              code2[i]=answer[i];
+ 219   4             repoint=1;
+ 220   4          }
+ 221   3          else
+ 222   3          {
+ 223   4             for(i=0;i<=strlen(answer)-1;i++)
+ 224   4              {
+ 225   5                if(code2[i]!=answer[i]||strlen(answer)!=6||strlen(code2)!=6)
+ 226   5                {
+ 227   6                  result=0;
+ 228   6                  break;  
+ 229   6                } 
+ 230   5              }
+ 231   4             if(result)//重置成功
+ 232   4             {
+ 233   5              LcdWriteData('Y');
+ 234   5              LcdWriteData('E');
+ 235   5              LcdWriteData('S');
+ 236   5              for(i=0;i<=5;i++)
+ 237   5              {
+ 238   6                write(i+1,code2[i]);
+ 239   6                delay1(100);
+ 240   6              }
+ 241   5              for(i=0;i<=5;i++)//密码读取
+C51 COMPILER V9.54   MAIN                                                                  04/12/2020 00:30:44 PAGE 5   
+
+ 242   5              {
+ 243   6                code1[i]=read(i+1);
+ 244   6                delay1(100);
+ 245   6              }
+ 246   5             }
+ 247   4             else//重置失败
+ 248   4             {
+ 249   5               LcdWriteData('N');
+ 250   5               LcdWriteData('O');
+ 251   5             }
+ 252   4             repoint=0;
+ 253   4             result=1;
+ 254   4             review=0;
+ 255   4             memset(code2, 0 , sizeof(code2));//清空code2
+ 256   4             code2[0]='\0';
+ 257   4             delay1(100000);delay1(100000);delay1(100000);
+ 258   4             delay1(100000);delay1(100000);delay1(100000);
+ 259   4             LcdInit();
+ 260   4          }
+ 261   3        
+ 262   3        }//密码重置结束
+ 263   2        counter=0;
+ 264   2        memset(answer, 0 , sizeof(answer));//清空answer
+ 265   2        answer[0]='\0';
+ 266   2        }
+ 267   1      }
+ 268          void initT() interrupt 4
+ 269          {
+ 270   1        find=SBUF;
+ 271   1        RI=0;
+ 272   1        SBUF=find;
+ 273   1        while(!TI);
+ 274   1        TI=0;
+ 275   1        lanya=1;  
+ 276   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1137    ----
+   CONSTANT SIZE    =     16    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     36      78
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,123 @@
+C51 COMPILER V9.54   I2C                                                                   04/12/2020 00:30:44 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE I2C
+OBJECT MODULE PLACED IN i2c.OBJ
+COMPILER INVOKED BY: D:\Keil\C51\BIN\C51.EXE i2c.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include "i2c.h"
+   2          void delay()
+   3          {
+   4   1        uchar a,b;
+   5   1        for(b=1;b>0;b--)
+   6   1          for(a=2;a>0;a--);
+   7   1      }
+   8          void start()
+   9          {
+  10   1        SDA=1;
+  11   1        delay();
+  12   1        SCL=1;
+  13   1        delay();
+  14   1        SDA=0;
+  15   1        delay();
+  16   1      }
+  17          void stop()
+  18          {
+  19   1        SDA=0;
+  20   1        delay();
+  21   1        SCL=1;
+  22   1        delay();
+  23   1        SDA=1;
+  24   1        delay();
+  25   1      }
+  26          void write_8bit(uchar dat)
+  27          {
+  28   1        uchar i,j;
+  29   1        SCL=0;
+  30   1        delay();
+  31   1        for(i=0;i<=7;i++)
+  32   1        {
+  33   2          if(dat&0x80)
+  34   2            SDA=1;
+  35   2          else
+  36   2            SDA=0;
+  37   2          delay();
+  38   2          dat<<=1;
+  39   2          SCL=1;
+  40   2          delay();
+  41   2          SCL=0;
+  42   2          delay();
+  43   2        }
+  44   1        SDA=1;
+  45   1        delay();
+  46   1        SCL=1;
+  47   1        while(SDA)
+  48   1        {
+  49   2          j++;
+  50   2          if(j>200)
+  51   2          {
+  52   3            SCL=0;
+  53   3            delay();
+  54   3            return ;
+  55   3          } 
+C51 COMPILER V9.54   I2C                                                                   04/12/2020 00:30:44 PAGE 2   
+
+  56   2        }
+  57   1        SCL=0;
+  58   1        delay();
+  59   1      }
+  60          uchar read_8bit()
+  61          {
+  62   1        uchar dat=0,i;
+  63   1        SCL=0;
+  64   1        delay();
+  65   1        SDA=1;
+  66   1        delay();
+  67   1        for(i=0;i<=7;i++)//ÒÆ7Î»£¬´«8Î»
+  68   1        {
+  69   2          SCL=1;
+  70   2          delay();
+  71   2          dat<<=1;
+  72   2          dat=SDA|dat;
+  73   2          delay();
+  74   2          SCL=0;
+  75   2          delay();
+  76   2        }
+  77   1        return dat;
+  78   1      }
+  79          void write(uchar add,uchar dat)
+  80          {
+  81   1        start();
+  82   1        write_8bit(0xa0);
+  83   1        write_8bit(add);
+  84   1        write_8bit(dat);
+  85   1        stop();
+  86   1      }
+  87          uchar read(uchar add)
+  88          {
+  89   1        uchar dat;
+  90   1        start();
+  91   1        write_8bit(0xa0);
+  92   1        write_8bit(add);
+  93   1        start();
+  94   1        write_8bit(0xa1);
+  95   1        dat=read_8bit();
+  96   1        stop();
+  97   1        return dat;
+  98   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    208    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
