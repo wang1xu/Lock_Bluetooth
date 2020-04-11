@@ -1,0 +1,186 @@
+C51 COMPILER V9.01   MAIN                                                                  05/09/2018 20:42:07 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\keil软件\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "reg52.h"      
+   2          #include "lcd.h"
+   3          #include "string.h"
+   4          #define GPIO_KEY P1
+   5          typedef unsigned int u16;         //对数据类型进行声明定义
+   6          typedef unsigned char u8;
+   7          u8 KeyValue;
+   8          u8 counter=0;
+   9          u8 code smgduan[]={'1','2','3','A','4','5','6','B','7','8','9','C','*','0','#','D'};//显示0~F的值
+  10          void delay(u16 i)
+  11          {
+  12   1              while(i--);     
+  13   1      }
+  14          
+  15          u8 KeyDown()
+  16          {
+  17   1              char a=0;
+  18   1              GPIO_KEY=0x0f;
+  19   1              if(GPIO_KEY!=0x0f)//读取按键是否按下
+  20   1              {
+  21   2                      delay(1000);//延时10ms进行消抖
+  22   2                      if(GPIO_KEY!=0x0f)//再次检测键盘是否按下
+  23   2                      {       
+  24   3                              //测试列
+  25   3                              GPIO_KEY=0X0F;
+  26   3                              switch(GPIO_KEY)
+  27   3                              {
+  28   4                                      case(0X07):     KeyValue=0;break;
+  29   4                                      case(0X0b):     KeyValue=1;break;
+  30   4                                      case(0X0d): KeyValue=2;break;
+  31   4                                      case(0X0e):     KeyValue=3;break;
+  32   4                              }
+  33   3                              //测试行
+  34   3                              GPIO_KEY=0XF0;
+  35   3                              switch(GPIO_KEY)
+  36   3                              {
+  37   4                                      case(0X70):     KeyValue=KeyValue;break;
+  38   4                                      case(0Xb0):     KeyValue=KeyValue+4;break;
+  39   4                                      case(0Xd0): KeyValue=KeyValue+8;break;
+  40   4                                      case(0Xe0):     KeyValue=KeyValue+12;break;
+  41   4                              }
+  42   3                              while((a<50)&&(GPIO_KEY!=0xf0))  //检测按键松手检测
+  43   3                              {
+  44   4                                      delay(1000);
+  45   4                                      a++;
+  46   4                              }
+  47   3                      }
+  48   2                      return 1;
+  49   2              }
+  50   1              else
+  51   1                      return 0;
+  52   1      }
+  53          u8 zhengwu(u8 panduan)
+  54          {
+  55   1         if(panduan)
+C51 COMPILER V9.01   MAIN                                                                  05/09/2018 20:42:07 PAGE 2   
+
+  56   1              {
+  57   2                      LcdWriteData('O');
+  58   2                      LcdWriteData('K');
+  59   2              }
+  60   1              else
+  61   1              {
+  62   2                      LcdWriteData('E');
+  63   2                      LcdWriteData('R');
+  64   2                      LcdWriteData('R');
+  65   2                      LcdWriteData('0');
+  66   2                      LcdWriteData('R');
+  67   2              }
+  68   1              delay(100000);delay(100000);delay(100000);
+  69   1              delay(100000);delay(100000);delay(100000);
+  70   1              delay(100000);delay(100000);delay(100000);
+  71   1              LcdInit();
+  72   1              return 1;
+  73   1      }
+  74          void main(void)
+  75          {
+  76   1          u8 find;
+  77   1              u8 answer[32];
+  78   1              u8 reanswer[32];
+  79   1              u8 j;//answer的计数
+  80   1              u8 code1[6]={'0','1','2','3','4','5'};
+  81   1              u8 panduan=1;
+  82   1              LcdInit();
+  83   1              while(1)
+  84   1              {
+  85   2              while(1)
+  86   2              {
+  87   3                  find=KeyDown();
+  88   3                      if(find)
+  89   3                              {       
+  90   4                              if(counter==17)
+  91   4                                      LcdWriteCom(0x40+0x80);
+  92   4                              if(counter==33)
+  93   4                                      {
+  94   5                                      LcdInit();
+  95   5                                      counter=1;
+  96   5                                      }
+  97   4                              if(smgduan[KeyValue]!='B'&&smgduan[KeyValue]!='A')
+  98   4                              {
+  99   5                              LcdWriteData(smgduan[KeyValue]);
+ 100   5                              answer[counter]=smgduan[KeyValue];
+ 101   5                              counter++;
+ 102   5                              }
+ 103   4      
+ 104   4      
+ 105   4                          if(smgduan[KeyValue]=='A')//退位
+ 106   4                              {
+ 107   5                              u8 i;
+ 108   5                              LcdWriteCom(0x04);//实际测得
+ 109   5                              LcdWriteData(' ');
+ 110   5                              LcdWriteCom(0x06);
+ 111   5                              LcdWriteData(' ');
+ 112   5                              LcdWriteCom(0x04);
+ 113   5                              LcdWriteData(' ');
+ 114   5                              LcdWriteCom(0x06);
+ 115   5                              counter--;
+ 116   5                              if(strlen(answer)>6)
+ 117   5                              {
+C51 COMPILER V9.01   MAIN                                                                  05/09/2018 20:42:07 PAGE 3   
+
+ 118   6                                      for(i=0;i<=strlen(answer)-1;i++)
+ 119   6                                              reanswer[i]=answer[i];
+ 120   6                                      memset(answer, 0 , sizeof(answer));
+ 121   6                                      for(i=0;i<=counter-1;i++)
+ 122   6                                          answer[i]=reanswer[i];
+ 123   6                              }
+ 124   5                              }
+ 125   4      
+ 126   4      
+ 127   4                              if(smgduan[KeyValue]=='B')//清空
+ 128   4                              {
+ 129   5                                      LcdInit();
+ 130   5                                      memset(answer, 0 , sizeof(answer));//清空answer
+ 131   5                                      counter=0;
+ 132   5                              }
+ 133   4                              if(smgduan[KeyValue]=='D')
+ 134   4                              {
+ 135   5                                      //LcdWriteData(smgduan[strlen(answer)]);
+ 136   5                              //while(1);检测
+ 137   5                                      break;
+ 138   5                              }
+ 139   4                              }
+ 140   3              }
+ 141   2              //for(j=0;j<=7;j++) LcdWriteData(answer[j]);
+ 142   2              //while(1);
+ 143   2              if(strlen(answer)!=7)//本来6位密码但是要加一个‘D’确认键，共七位
+ 144   2                      panduan=0;
+ 145   2              for(j=0;j<=5;j++)
+ 146   2              {
+ 147   3                      if(answer[j]!=code1[j])
+ 148   3                      {
+ 149   4                      panduan=0;
+ 150   4                      }
+ 151   3              }
+ 152   2              LcdInit();
+ 153   2              panduan=zhengwu(panduan);
+ 154   2              counter=0;
+ 155   2              memset(answer, 0 , sizeof(answer));//清空answer
+ 156   2              answer[0]='\0';
+ 157   2              }       
+ 158   1                                      
+ 159   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    594    ----
+   CONSTANT SIZE    =     22    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2      73
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
